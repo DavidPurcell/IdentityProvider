@@ -7,7 +7,7 @@ var http = require('http');
 //IDENTITY = the location (URL or IP) of an identity service.  Should ALWAYS be localhost.
 
 router.get('/auth', function(req, res){
-  //auth?type=joint_auth_code&identity=[]&user=[]&user_auth_key="KEY"&user_to_auth="USER"
+  //auth?type=joint_auth_code&identity=[]&users=[]&user_auth_key="KEY"&user_to_auth="USER"
   //Request a code that authorizes the creation of a specific joint token.
   if(req.query.type == 'joint_auth_code'){
     console.log('Lets get ready to accept a joint token!')
@@ -42,7 +42,7 @@ router.get('/auth', function(req, res){
     
     //List of identities and users.  Assume order preserved.
     var identity = req.query.identity.split(',')
-    var user = req.query.user.split(',')
+    var user = req.query.users.split(',')
     
     //Generate auth_code and preserve it in "database" lol
     var auth_code = uuid.v1()
@@ -125,10 +125,12 @@ router.get('/token_chain', function(req, res){
   //Read through jt_auth_codes looking for a match.
   var match = false
   var jt_auth_codes = req.query.jt_auth_codes.split(',')
-  var stored_joint_auth_codes = fs.readFileSync('./database/joint_auth_codes.txt','utf8').split('\r\n')
+  var stored_joint_auth_codes = fs.readFileSync('./database/joint_auth_codes.txt','utf8').split('\n')
   
   stored_joint_auth_codes.forEach(function(auth_code) {
     //TODO: Check more than just auth_code, lol.
+    auth_code = auth_code.replace('\r', '')
+    auth_code = auth_code.replace('\n', '')
     if(jt_auth_codes.indexOf(auth_code.split('|')[0]) > -1){
       match = true
     }
@@ -222,10 +224,12 @@ router.get('/confirm', function(req, res){
   //Look up the joint_token in "database"
   var token_to_confirm = req.query.joint_token
   
-  var stored_joint_tokens = fs.readFileSync('./database/joint_tokens.txt','utf8').split('\r\n')
+  var stored_joint_tokens = fs.readFileSync('./database/joint_tokens.txt','utf8').split('\n')
   var identity = null
   var users = null
   stored_joint_tokens.forEach(function(joint_token, index) {
+    joint_token = joint_token.replace('\r', '')
+    joint_token = joint_token.replace('\n', '')
     var token_to_check = joint_token.split('|')[0]
     console.log(index + " " + joint_token)
     if(token_to_confirm.indexOf(token_to_check) > -1){
@@ -295,6 +299,8 @@ router.get('/confirm_chain', function(req, res){
   var identity = null
   var users = null
   stored_joint_tokens.forEach(function(joint_token) {
+    joint_token = joint_token.replace('\r', '')
+    joint_token = joint_token.replace('\n', '')
     var token_to_check = joint_token.split('|')[0]
     if(token_to_confirm.indexOf(token_to_check) > -1){
       identity = joint_token.split('|')[1].split(',')
