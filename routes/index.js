@@ -4,7 +4,7 @@ var uuid = require('node-uuid');
 var fs = require('fs');
 var http = require('http');
 
-//IDENTITY = the location (URL or IP) of an identity service.
+//IDENTITY = the location (URL or IP) of an identity service.  Should ALWAYS be localhost.
 
 router.get('/auth', function(req, res){
   //auth?type=joint_auth_code&identity=[]&user=[]&user_auth_key="KEY"&user_to_auth="USER"
@@ -98,7 +98,7 @@ router.get('/token', function(req, res){
       console.log('Starting the chain.')
       var options = {
         host: identity[0],
-        port: 4000,
+        port: 3000,
         path: '/token_chain?' + params
       };
       callback = function(response) {
@@ -186,7 +186,7 @@ router.get('/token_chain', function(req, res){
     params += '&user_to_validate=' + next_user
     var options = {
       host: next_identity,
-      port: 4000,
+      port: 3000,
       path: '/token_chain?' + params
     };
     callback = function(response) {
@@ -245,7 +245,8 @@ router.get('/confirm', function(req, res){
   var next_user = users.split(',')[1]
   var next_identity = identity.split(',')[1]
   
-  //TODO: If confirm_chain needed, send to the confirm_chain.
+  //If confirm_chain needed, send to the confirm_chain.
+  //You should always need to.  Don't make joint tokens for 1 person
   if(users.length > 1){
     //send along the confirm chain.
     console.log('starting confirm chain')
@@ -256,7 +257,7 @@ router.get('/confirm', function(req, res){
     params += '&next_user=' + next_user
     var options = {
       host: next_identity,
-      port: 4000,
+      port: 3000,
       path: '/confirm_chain?' + params
     };
     callback = function(response) {
@@ -269,7 +270,7 @@ router.get('/confirm', function(req, res){
         console.log('response received')
         if(str == 'OK'){
           console.log('they were good so we are good')
-          res.sendStatus(200)
+          res.send(users)
         } else {
           console.log('they were bad so we are bad')
           res.sendStatus(418)
@@ -278,7 +279,7 @@ router.get('/confirm', function(req, res){
     }
     http.request(options, callback).end();
   } else {
-    res.sendStatus(200)
+    res.send(users)
   }
 });
 
@@ -330,7 +331,7 @@ router.get('/confirm_chain', function(req, res){
     params += '&next_user=' + next_user
     var options = {
       host: next_identity,
-      port: 4000,
+      port: 3000,
       path: '/confirm_chain?' + params
     };
     callback = function(response) {
