@@ -7,10 +7,36 @@ var http = require('http');
 //IDENTITY = the location (URL or IP) of an identity service.
 
 router.get('/auth', function(req, res){
-  //auth?type=joint_auth_code&identity=[]&user=[]&user_auth_code="user auth code"
+  //auth?type=joint_auth_code&identity=[]&user=[]&user_auth_key="KEY"&user_to_auth="USER"
+  //Request a code that authorizes the creation of a specific joint token.
   if(req.query.type == 'joint_auth_code'){
-    console.log('Lets get ready to accept an auth code')
+    console.log('Lets get ready to accept a joint token!')
     //TODO: VERIFY THAT THE CORRECT USER IS THE ONE REQUESTING THE JOINT AUTH_CODE
+    var user_auth_key = req.query.user_auth_key
+    var user_to_auth = req.query.user_to_auth
+    console.log('user_auth_key: ' + user_auth_key)
+    console.log('user_to_auth: ' + user_to_auth)
+    
+    var match = false
+    var stored_users = fs.readFileSync('./database/users.txt','utf8').split('\r\n')
+    
+    stored_users.forEach(function(user) {
+      console.log("checking user: " + user)
+      var i = user_to_auth.indexOf(user.split('|')[0])
+      var j = user_auth_key.indexOf(user.split('|')[1])
+      console.log(i + " " + j)
+      if(i > -1 && j > -1){
+        match = true
+        console.log("THEY EXIST")
+      }
+    });
+    if(match == false){
+      console.log('no matching jt_auth_code')
+      res.sendStatus(418)
+      return
+    }
+
+    console.log("User authenticated")
     
     //List of identities and users.  Assume order preserved.
     var identity = req.query.identity.split(',')
@@ -72,7 +98,7 @@ router.get('/token', function(req, res){
       console.log('Starting the chain.')
       var options = {
         host: identity[0],
-        port: 3000,
+        port: 4000,
         path: '/token_chain?' + params
       };
       callback = function(response) {
@@ -160,7 +186,7 @@ router.get('/token_chain', function(req, res){
     params += '&user_to_validate=' + next_user
     var options = {
       host: next_identity,
-      port: 3000,
+      port: 4000,
       path: '/token_chain?' + params
     };
     callback = function(response) {
@@ -230,7 +256,7 @@ router.get('/confirm', function(req, res){
     params += '&next_user=' + next_user
     var options = {
       host: next_identity,
-      port: 3000,
+      port: 4000,
       path: '/confirm_chain?' + params
     };
     callback = function(response) {
@@ -304,7 +330,7 @@ router.get('/confirm_chain', function(req, res){
     params += '&next_user=' + next_user
     var options = {
       host: next_identity,
-      port: 3000,
+      port: 4000,
       path: '/confirm_chain?' + params
     };
     callback = function(response) {
