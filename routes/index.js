@@ -18,10 +18,12 @@ router.get('/auth', function(req, res){
     console.log('user_to_auth: ' + user_to_auth)
     
     var match = false
-    var stored_users = fs.readFileSync('./database/users.txt','utf8').split('\r\n')
+    var stored_users = fs.readFileSync('./database/users.txt','utf8').split('\n')
     
     stored_users.forEach(function(user) {
       console.log("checking user: " + user)
+      user = user.replace('\r', '')
+      user = user.replace('\n', '')
       var i = user_to_auth.indexOf(user.split('|')[0])
       var j = user_auth_key.indexOf(user.split('|')[1])
       console.log(i + " " + j)
