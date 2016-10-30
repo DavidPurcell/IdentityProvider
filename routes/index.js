@@ -109,7 +109,7 @@ router.get('/token', function(req, res){
           str += chunk;
         });
         response.on('end', function () {
-          console.log(str);
+          res.Text(joint_token)
         });
       }
       
